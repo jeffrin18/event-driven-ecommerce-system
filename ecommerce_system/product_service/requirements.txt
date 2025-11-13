@@ -1,0 +1,4 @@
+# product_service/requirements.txt
+Flask
+pika
+psycopg2-binary

@@ -1,0 +1,63 @@
+services:
+  # 1. The Product Service
+  product_service:
+    build: ./product_service
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./product_service:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      # --- ADD THESE DB VARIABLES ---
+      - DB_HOST=db
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=ecommerce
+    depends_on:
+      - rabbitmq
+      - db  # <-- Make it wait for the DB
+
+  # 2. The Order Service
+  order_service:
+    build: ./order_service
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./order_service:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - rabbitmq
+  
+  # 3. The Notification Service
+  notification_service:
+    build: ./notification_service
+    volumes:
+      - ./notification_service:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - rabbitmq
+  
+  # 4. The "Magic" - RabbitMQ
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  # 5. --- THIS IS YOUR NEW DATABASE ---
+  db:
+    image: postgres:15-alpine # Use the official Postgres image
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=ecommerce
+    ports:
+      - "5432:5432" # So you can connect to it from your PC if you want
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# --- This volume stores your database data safely ---
+volumes:
+  postgres_data:
